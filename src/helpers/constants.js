@@ -1,11 +1,25 @@
+export const code400 = 400;
 export const code404 = 404;
 export const code500 = 500;
 export const code200 = 200;
+export const code201 = 201;
+export const code409 = 409;
 export const errorStatus = 'error';
 export const successStatus = 'success';
 export const routeNotFoundError = 'Not found';
 export const internalServerError = 'Internal server error';
 export const welcomeMessage = 'Welcome to Inf-paces user access management service';
+export const emailValidationError = 'Invalid email address';
+export const passwordValidationError = 'Password must be at least 8 characters long';
+export const firstNameValidationError = 'First name is required and must be a sequence of alphabets (hyphenated or not)';
+export const lastNameValidationError = 'Last name is required and must be a sequence of alphabets (hyphenated or not)';
+export const phoneValidationError = 'Empty or invalid phone number';
+export const orgIdValidationError = 'Organization is required and must be an integer';
+export const addressValidationError = 'Address must be a string';
+export const cityValidationError = 'City must be a string';
+export const stateValidationError = 'State must be a string';
+export const addressDescriptionValidationError = 'Address description must be a string';
+export const duplicateEmailError = 'Duplicate entry! Please check email again';
 
 // DB Queries
 export const createOrganizationsTableQuery = `
@@ -42,8 +56,9 @@ export const createUsersTableQuery = `
     id BIGSERIAL PRIMARY KEY NOT NULL,
     first_name VARCHAR(50) NOT NULL,
     last_name VARCHAR(50) NOT NULL,
-    email VARCHAR(150) UNIQUE NOT NULL,
-    password VARCHAR(250),
+    email VARCHAR(150) NOT NULL,
+    email_org VARCHAR(200) UNIQUE NOT NULL,
+    password VARCHAR(250) NOT NULL,
     phone VARCHAR(11) NOT NULL,
     address VARCHAR(150),
     city VARCHAR(50),
@@ -58,12 +73,41 @@ export const createUsersTableQuery = `
   );
 `;
 
+
 export const createUserOrgTable = `
-  CREATE TABLE IF NOT EXISTS organization_users (
-    id BIGSERIAL PRIMARY KEY NOT NULL,
-    user_id BIGINT REFERENCES users (id) UNIQUE NOT NULL,
-    organization_id BIGINT REFERENCES organizations (id) NOT NULL
-  );
+CREATE TABLE IF NOT EXISTS organization_users (
+  id BIGSERIAL PRIMARY KEY NOT NULL,
+  user_id BIGINT REFERENCES users (id) UNIQUE NOT NULL,
+  organization_id BIGINT REFERENCES organizations (id) NOT NULL
+);
+`;
+
+export const createUserFunctionQuery = `
+  CREATE OR REPLACE FUNCTION create_user(
+    user_first_name TEXT, user_last_name TEXT, user_email TEXT, user_password TEXT,
+    user_phone VARCHAR(11), user_address TEXT, user_city TEXT, user_state TEXT,
+    address_desc TEXT, user_role user_roles, status BOOLEAN, creator BIGINT, org_id BIGINT
+  ) RETURNS RECORD AS $$
+  DECLARE usr RECORD;
+  BEGIN
+    INSERT INTO users (
+      first_name, last_name, email, email_org, password, phone, address,
+      city, state, address_description, role, activated, created_by
+    ) VALUES (
+      user_first_name, user_last_name, user_email, user_email || org_id, user_password,
+      user_phone, user_address, user_city, user_state, address_desc, user_role, status, creator
+    ) RETURNING id, first_name, last_name, email, phone, address,
+    city, state, address_description, role, activated, created_at, updated_at INTO usr;
+
+    INSERT INTO organization_users (
+      user_id, organization_id
+    ) VALUES (
+      usr.id, org_id
+    );
+
+    RETURN usr;
+  END;
+  $$ LANGUAGE plpgsql;
 `;
 
 export const createOrganizationFunctionQuery = `
@@ -83,22 +127,12 @@ export const createOrganizationFunctionQuery = `
       org_name, org_email, org_phone, org_address, org_city, org_state, org_address_desc, creator
     ) ON CONFLICT ON CONSTRAINT organizations_name_key DO UPDATE SET name=organizations.name RETURNING * INTO org;
 
-    INSERT INTO users (
-      first_name, last_name, email, password, phone, address,
-      city, state, address_description, role, activated, created_by
-    ) VALUES (
+    SELECT create_user(
       user_first_name, user_last_name, org_email, user_password, user_phone, user_address,
-      user_city, user_state, user_address_desc, 'super_admin', user_status, creator
-    ) ON CONFLICT (email) DO UPDATE SET email=users.email
-    RETURNING id, first_name, last_name, email, phone, address,
-    city, state, address_description, role, activated INTO usr;
+      user_city, user_state, user_address_desc, 'super_admin'::user_roles, user_status, creator, org.id
+    ) AS user INTO usr;
 
-    INSERT INTO organization_users (
-      user_id, organization_id
-    ) VALUES (
-      usr.id, org.id
-    ) ON CONFLICT (user_id) DO NOTHING;
-    RETURN QUERY SELECT row_to_json(org), row_to_json(usr);
+    RETURN QUERY SELECT row_to_json(org), row_to_json(usr.user);
   END;
   $$ LANGUAGE plpgsql;
 `;
@@ -119,6 +153,7 @@ export const createInfPacesQuery = (
   ],
 ];
 
+export const dropCreateUserFunction = 'DROP FUNCTION IF EXISTS create_user';
 export const dropCreateOrgFunction = 'DROP FUNCTION IF EXISTS create_organization';
 export const dropOrgUserTable = 'DROP TABLE IF EXISTS organization_users';
 export const dropUsersTable = 'DROP TABLE IF EXISTS users;';
