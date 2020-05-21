@@ -1,0 +1,25 @@
+language: node_js
+node_js:
+  - "12.16.2"
+cache:
+  directories:
+    - node_modules
+
+install:
+  - "npm ci"
+
+services:
+  - postgresql
+
+addons:
+  postgresql: "9.6"
+
+before_script:
+  - psql -c 'CREATE DATABASE inf_users;' -U postgres
+  - psql -c "ALTER ROLE postgres PASSWORD 'postgres';" -U postgres
+
+script:
+  - "npm test"
+
+after_success:
+  - npm run coverage

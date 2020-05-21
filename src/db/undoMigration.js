@@ -1,11 +1,12 @@
 import dbConnection from './dbConnection';
 import {
   dropCreateOrgFunction, dropOrgUserTable,
-  dropUserRolesType, dropUsersTable, dropOrganizationsTable,
+  dropUserRolesType, dropUsersTable, dropOrganizationsTable, dropCreateUserFunction,
 } from '../helpers/constants';
 
 (async () => {
   try {
+    await dbConnection.dbConnect(dropCreateUserFunction);
     await dbConnection.dbConnect(dropCreateOrgFunction);
     await dbConnection.dbConnect(dropOrgUserTable);
     await dbConnection.dbConnect(dropOrganizationsTable);
