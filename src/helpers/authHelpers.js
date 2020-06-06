@@ -33,4 +33,8 @@ export default class {
    * @returns {Promise}
    */
   static async hashPassword(password) { return bcrypt.hash(password, 10); }
+
+  static async verifyPassword(password, storedPassword) {
+    return bcrypt.compare(password, storedPassword);
+  }
 }

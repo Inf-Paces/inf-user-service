@@ -1,8 +1,14 @@
+import { debug as createDebugger } from 'debug';
+
 import dbConnection from './dbConnection';
 import {
   dropCreateOrgFunction, dropOrgUserTable,
   dropUserRolesType, dropUsersTable, dropOrganizationsTable, dropCreateUserFunction,
-} from '../helpers/constants';
+} from '../helpers/queries';
+import debugHelper from '../helpers/debugHelper';
+
+
+const debug = createDebugger('app:undoMigration');
 
 (async () => {
   try {
@@ -13,6 +19,6 @@ import {
     await dbConnection.dbConnect(dropUsersTable);
     await dbConnection.dbConnect(dropUserRolesType);
   } catch (error) {
-    console.log(error.message);
+    debugHelper.error(debug, error);
   }
 })();

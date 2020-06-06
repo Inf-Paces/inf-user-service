@@ -9,7 +9,7 @@ export default class {
    * Validates the signup request payload
    * @returns {array}
    */
-  static validateSignUpBody() {
+  static validateSignupBody() {
     // address, city, state, addressDescription,
     return [
       requestValidators.email,
@@ -22,6 +22,27 @@ export default class {
       requestValidators.city,
       requestValidators.state,
       requestValidators.addressDescription,
+      (request, response, next) => {
+        const errors = validationResult(request);
+        if (!errors.isEmpty()) {
+          const error = extractValidationErrors(errors);
+          return Responses.badRequestError(response, error);
+        }
+
+        next();
+      },
+    ];
+  }
+
+  /**
+   * Validates the signin request payload
+   * @returns {array}
+   */
+  static validateSigninBody() {
+    return [
+      requestValidators.email,
+      requestValidators.password,
+      requestValidators.organization,
       (request, response, next) => {
         const errors = validationResult(request);
         if (!errors.isEmpty()) {
