@@ -1,4 +1,6 @@
-import { errorStatus, successStatus, code400, code200 } from './constants';
+import {
+  errorStatus, successStatus, code400, code200, code401,
+} from './constants';
 
 
 export default class Responses {
@@ -20,5 +22,9 @@ export default class Responses {
    */
   static success(response, data, code = code200) {
     return response.status(code).json({ status: successStatus, data });
+  }
+
+  static unauthorizedError(response, error, code = code401) {
+    return response.status(code).json({ status: errorStatus, error });
   }
 }

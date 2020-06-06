@@ -37,4 +37,25 @@ export default class Users {
 
     return user;
   }
+
+  /**
+   * Retrieves a single user
+   * @param {string} email
+   * @param {string} password
+   * @param {string} organization
+   * @returns object
+   */
+  static async getUser(email, organization) {
+    const { rows: [user] } = await dbConnection.dbConnect(
+      `
+        SELECT u.*, org.name org_name, org.id FROM users u INNER JOIN organization_users org_users
+        ON u.id=org_users.user_id INNER JOIN organizations org ON org.id=org_users.organization_id
+        WHERE u.email=$1 AND org.id=$2;
+      `, [
+        email, organization,
+      ],
+    );
+
+    return user;
+  }
 }

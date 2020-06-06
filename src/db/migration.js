@@ -1,13 +1,17 @@
+import { debug as createDebugger } from 'debug';
+
 import dbConnection from './dbConnection';
 import envVariables from '../environment';
 import {
   createOrganizationsTableQuery, createUserOrgTable, createInfPacesQuery,
   createUserRolesTypeQuery, createUsersTableQuery,
   createOrganizationFunctionQuery, createUserFunctionQuery,
-} from '../helpers/constants';
+} from '../helpers/queries';
 import authHelpers from '../helpers/authHelpers';
+import debugHelper from '../helpers/debugHelper';
 
 
+const debug = createDebugger('app:migration');
 const {
   adminEmail, adminPassword, adminPhone, infName,
 } = envVariables;
@@ -27,6 +31,6 @@ const {
       adminPhone, '12 Adebimpe Street', 'Lagos', 'Lagos', null, true,
     ));
   } catch (error) {
-    console.log(error.message);
+    debugHelper.error(debug, error);
   }
 })();

@@ -18,7 +18,8 @@ import {
 
 chai.use(chaiHttp);
 const { expect } = chai;
-const registerUrl = '/api/v1/auth/register';
+const authUrl = '/api/v1/auth';
+const registerUrl = `${authUrl}/register`;
 let orgId;
 
 before((done) => {
@@ -28,14 +29,14 @@ before((done) => {
       done();
     })
     .catch((error) => done(error));
-})
+});
 
 describe(registerUrl, () => {
   describe('GET', () => {
     describe('SUCCESS', () => {
       it('should retrieve the list of organizations with their names and id', async () => {
         const res = await chai.request(app)
-          .get(registerUrl)
+          .get(authUrl)
           .send();
 
         expect(res.status).to.equal(code200)
@@ -50,7 +51,7 @@ describe(registerUrl, () => {
       it('should give a 500 error retrieving the organizations', async () => {
         const stub = Sinon.stub(Organizations, 'getNamesAndIds').throws(new Error());
         const res = await chai.request(app)
-          .get(registerUrl)
+          .get(authUrl)
           .send();
 
         expect(res.status).to.equal(code500);
